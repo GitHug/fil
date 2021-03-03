@@ -1,0 +1,40 @@
+{
+  "name": "fil",
+  "version": "1.0.0",
+  "description": "Fil - File Storage",
+  "main": "src/index.js",
+  "author": "fredrik@takanoha.ax",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "npm run clean && webpack",
+    "clean": "rimraf build",
+    "lint": "eslint --ext .ts .",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ssm": "^3.7.0",
+    "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.4",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.72",
+    "@types/jest": "^26.0.20",
+    "@types/jsonwebtoken": "^8.5.0",
+    "@types/jwk-to-pem": "^2.0.0",
+    "@types/node-fetch": "^2.5.8",
+    "@types/webpack": "^4.41.26",
+    "@typescript-eslint/eslint-plugin": "^4.16.1",
+    "@typescript-eslint/parser": "^4.16.1",
+    "eslint": "^7.21.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "jest": "^26.6.3",
+    "prettier": "^2.2.1",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^26.5.2",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.2"
+  }
+}
