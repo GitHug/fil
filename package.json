@@ -7,13 +7,11 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "npm run clean && webpack",
-    "clean": "rimraf build",
+    "build": "node_modules/typescript/bin/tsc",
     "lint": "eslint --ext .ts .",
     "test": "jest"
   },
   "dependencies": {
-    "@aws-sdk/client-ssm": "^3.7.0",
     "jsonwebtoken": "^8.5.1",
     "jwk-to-pem": "^2.0.4",
     "node-fetch": "^2.6.1"
@@ -27,6 +25,7 @@
     "@types/webpack": "^4.41.26",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
+    "aws-sdk": "^2.858.0",
     "eslint": "^7.21.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",

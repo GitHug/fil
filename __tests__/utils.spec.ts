@@ -1,29 +1,30 @@
-import { userPoolIdGetter, resetUserPoolId } from '../src/utils';
-import { SSMClient } from '@aws-sdk/client-ssm';
+import { getSSMParameter, reset } from '../src/utils';
+import SSMClient from 'aws-sdk/clients/ssm';
 
 describe('utils', () => {
+  const client = new SSMClient({ region: 'us-east-1' });
   beforeEach(() => {
     jest.clearAllMocks();
-    resetUserPoolId();
+    reset();
   });
 
-  describe('userPoolIdGetter', () => {
+  describe('getSSMParameter', () => {
     it('should get the user pool id from SSM if it is not already fetched', async () => {
-      const client = new SSMClient({ region: 'us-east-1' });
+      const parameter = await getSSMParameter('/application/param');
 
-      const userPoolId = await userPoolIdGetter();
-
-      expect(client.send).toHaveBeenCalled();
-      expect(userPoolId).toBe('us-east-1_123abc');
+      expect(client.getParameter).toHaveBeenCalled();
+      expect(parameter).toContain('us-east-1');
     });
 
-    it('should cache the user pool so it only needs to access SSM once', async () => {
-      const client = new SSMClient({ region: 'us-east-1' });
+    it('should cache the parameters so it only needs to access SSM once for the same parameter', async () => {
+      const response1 = await getSSMParameter('/application/param');
+      const response2 = await getSSMParameter('/application/param');
+      const response3 = await getSSMParameter('/application/something-else');
 
-      await userPoolIdGetter();
-      await userPoolIdGetter();
+      expect(client.getParameter).toHaveBeenCalledTimes(2);
 
-      expect(client.send).toHaveBeenCalledTimes(1);
+      expect(response2).toEqual(response1);
+      expect(response3).not.toEqual(response1);
     });
   });
 });

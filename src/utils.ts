@@ -1,33 +1,41 @@
-import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
+import SSM from 'aws-sdk/clients/ssm';
 
-const paramterName = '/applications/fil/user-pool';
+function getSSMParameterClosure(): { get: (path: string) => Promise<string>; reset: () => void } {
+  const parameters: { [path: string]: string } = {};
 
-function getUserPoolId(): { get: () => Promise<string>; reset: () => void } {
-  let userPoolId: string;
+  const client = new SSM({ region: 'us-east-1' });
 
   return {
-    async get() {
-      if (userPoolId) return userPoolId;
+    async get(path: string): Promise<string> {
+      if (parameters[path]) return parameters[path];
 
-      const client = new SSMClient({ region: 'us-east-1' });
+      const query = {
+        Name: path
+      };
 
-      const command = new GetParameterCommand({
-        Name: paramterName
+      return new Promise((resolve, reject) => {
+        client.getParameter(query, (err, data) => {
+          if (err) {
+            console.log(err, err.stack);
+            reject(err);
+          } else {
+            const userPoolId = data.Parameter.Value;
+            parameters[path] = userPoolId;
+            resolve(userPoolId);
+          }
+        });
       });
-      const data = await client.send(command);
-
-      if (!data.Parameter?.Value) throw new Error('Failed to fetch user pool id');
-
-      userPoolId = data.Parameter.Value;
-      return userPoolId;
     },
+
     reset() {
-      userPoolId = '';
+      Object.keys(parameters).forEach((path) => {
+        parameters[path] = undefined;
+      });
     }
   };
 }
 
-const closure = getUserPoolId();
+const closure = getSSMParameterClosure();
 
-export const userPoolIdGetter = closure.get;
-export const resetUserPoolId = closure.reset;
+export const getSSMParameter = closure.get;
+export const reset = closure.reset;

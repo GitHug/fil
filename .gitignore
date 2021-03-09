@@ -1,3 +1,6 @@
 samconfig.toml
 node_modules
 dist/
+.aws-sam/
+tsconfig-only-handler.json
+.python-version
