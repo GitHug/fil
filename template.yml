@@ -1,0 +1,279 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS SAM template for provisioning Fil.
+
+Globals:
+  Function:
+    Timeout: 5
+    Runtime: nodejs12.x
+
+Parameters:
+  Stage:
+    Type: String
+    Default: test
+    Description: The stage to use
+
+  ApiKeyValue:
+    Type: String
+    MinLength: 20
+    Description: API key used for communication between API Gateway and Cloudfront Distribution
+
+Resources:
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Stage
+      Auth:
+        ApiKeyRequired: true
+        DefaultAuthorizer: GeneralAuth
+        Authorizers:
+          GeneralAuth:
+            AuthorizationScopes:
+              - email
+            UserPoolArn: !GetAtt UserPool.Arn
+
+  ApiUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn:
+      - ApiGatewayStage
+    Properties:
+      Description: CloudFront usage only
+      UsagePlanName: !Sub ${AWS::StackName}_CloudFront_only
+      ApiStages:
+        - ApiId: !Ref ApiGateway
+          Stage: !Ref Stage
+
+  ApiKey: 
+    Type: AWS::ApiGateway::ApiKey
+    Properties: 
+      Description: CloudFormation API Key
+      Value: !Ref ApiKeyValue
+      Enabled: true
+
+  ApiKeyUsagePlan:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref ApiUsagePlan
+
+  ApiFunction: # Adds a GET api endpoint at "/" to the ApiGateway via an Api event
+    Type: AWS::Serverless::Function
+    Properties:
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /api
+            Method: get
+            RestApiId:
+              Ref: ApiGateway
+      Runtime: python3.7
+      Handler: index.handler
+      InlineCode: |
+        def handler(event, context):
+            return {'body': 'Hello World!', 'statusCode': 200}
+
+  UserPool:
+    Type: AWS::Cognito::UserPool 
+    Properties: 
+      UserPoolName: !Sub ${AWS::StackName}UserPool${Stage} 
+      Policies: 
+        PasswordPolicy: 
+          MinimumLength: 8
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes: 
+        - email
+      Schema: 
+        - AttributeDataType: String 
+          Name: email 
+          Required: false
+
+  SSMUserPoolId:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /applications/fil/user-pool
+      Type: String
+      Value: !Ref UserPool
+      Description: Cognito User Pool ID
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties: 
+      Domain: !Sub fil-${Stage}-${AWS::AccountId}
+      UserPoolId: !Ref UserPool
+  
+  CloudFrontS3LoggingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        PriceClass: PriceClass_100
+        Comment: !Sub ${AWS::StackName}-cf
+        HttpVersion: http2
+        IPV6Enabled: true
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 400
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 403
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 404
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 405
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 414
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 416
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 500
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 501
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 502
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 503
+          - ErrorCachingMinTTL: 0
+            ErrorCode: 504
+        Logging:
+          Bucket: !GetAtt CloudFrontS3LoggingBucket.DomainName
+          Prefix: CloudFrontDistributionLogs
+        Origins:
+          - Id: APIGW
+            DomainName: !Sub "${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com"
+            CustomOriginConfig:
+              HTTPPort: 443
+              OriginProtocolPolicy: https-only
+            OriginCustomHeaders:
+              - HeaderName: x-api-key
+                HeaderValue: !Ref ApiKeyValue
+        DefaultCacheBehavior:
+          TargetOriginId: APIGW
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
+        CacheBehaviors:
+          - PathPattern: !Sub '${Stage}/api*'
+            TargetOriginId: APIGW
+            DefaultTTL: 0
+            MaxTTL: 0
+            MinTTL: 0
+            ForwardedValues:
+              QueryString: false
+              Headers:
+                - Authorization
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: allow-all
+            LambdaFunctionAssociations:
+              - EventType: viewer-request
+                LambdaFunctionARN: !Ref AuthAtEdge.Version
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool 
+      ClientName: !Sub ${AWS::StackName}UserPoolClient-${Stage}-${AWS::AccountId} 
+      GenerateSecret: false
+      SupportedIdentityProviders:
+        - COGNITO
+      CallbackURLs: 
+        -  !Sub "https://${Distribution.DomainName}"
+      LogoutURLs: 
+        -  !Sub "https://${Distribution.DomainName}"
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+        - implicit #for testing with postman
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+
+  AuthAtEdge:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      Handler: dist/edge/auth.handler
+      Role: !GetAtt AuthAtEdgeRole.Arn
+      AutoPublishAlias: live
+
+  AuthAtEdgeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+            - edgelambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+      Policies:
+        - PolicyName: CustomPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Resource: "*"
+                Action: lambda:InvokeFunction
+        - PolicyName: ReadFromSSM
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/applications/fil/user-pool
+
+  # RuntimeDependenciesLayer:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     Description: Runtime dependencies for Lambda functions
+  #     ContentUri: ./
+  #     CompatibleRuntimes:
+  #       - nodejs12.x
+  #     RetentionPolicy: Retain
+  #   Metadata:
+  #     BuildMethod: makefile
+
+Outputs:
+  StackName:
+    Description: Stack Name
+    Value: !Ref AWS::StackName
+    Export:
+      Name: StackName
+
+  CFDistribution: 
+    Description: Cloudfront Domain URL
+    Value: !Sub "https://${Distribution.DomainName}"
+
+  AuthURL:
+    Description: "Auth endpoint URL"
+    Value: !Sub "https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login"
+
+  ClientID:
+    Description: "User pool client ID"
+    Value: !Ref UserPoolClient
