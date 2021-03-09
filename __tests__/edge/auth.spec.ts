@@ -199,6 +199,21 @@ describe('handler', () => {
     });
   });
 
+  it('should respond with forbidden if JWT fails verifications', async () => {
+    jwtVerifyMock.mockImplementationOnce((token, pem, options, callback) => {
+      callback({ expiredAt: new Date(), inner: new Error('error'), name: 'expired', message: 'expired' }, null);
+    });
+
+    await handler(cloudFrontEvent, context, callback);
+
+    expect(jwt.verify).toHaveBeenCalled();
+
+    expect(callback).toHaveBeenCalledWith(null, {
+      status: '401',
+      statusDescription: 'Unauthorized'
+    });
+  });
+
   it('should respond with success if JWT pass verification', async () => {
     await handler(cloudFrontEvent, context, callback);
 
