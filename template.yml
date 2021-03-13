@@ -104,6 +104,7 @@ Resources:
             - HEAD
           AllowedOrigins:
             - "*"
+      AccessControl: PublicRead
 
   UserPool:
     Type: AWS::Cognito::UserPool 
@@ -186,21 +187,20 @@ Resources:
             OriginCustomHeaders:
               - HeaderName: x-api-key
                 HeaderValue: !Ref ApiKeyValue
+          - Id: S3 Origin
+            DomainName: !GetAtt FilStorageBucket.DomainName
+            S3OriginConfig: {}
         DefaultCacheBehavior:
-          TargetOriginId: APIGW
+          TargetOriginId: S3 Origin
           ForwardedValues:
             QueryString: false
             Cookies:
               Forward: none
           ViewerProtocolPolicy: redirect-to-https
           AllowedMethods:
-            - DELETE
             - GET
             - HEAD
             - OPTIONS
-            - PATCH
-            - POST
-            - PUT
         CacheBehaviors:
           - PathPattern: !Sub '${Stage}/api*'
             TargetOriginId: APIGW
