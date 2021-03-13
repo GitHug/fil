@@ -37,7 +37,8 @@ export async function handler(event: APIGatewayEvent): Promise<LambdaResponse> {
     Metadata: {
       name: formData.name
     },
-    ContentDisposition: `attachment; filename="${formData.fileName}"`
+    ContentDisposition: `attachment; filename="${formData.fileName}"`,
+    ACL: 'public-read'
   };
 
   console.log('S3 params: ', s3Params);
