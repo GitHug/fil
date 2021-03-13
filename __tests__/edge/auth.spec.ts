@@ -1,12 +1,12 @@
 import { handler } from '../../src/edge/auth';
 import event from '../../events/cloudfront.json';
 import { CloudFrontRequestEvent } from 'aws-lambda/trigger/cloudfront-request';
-import { getSSMParameter } from '../../src/utils';
+import { getSSMParameter } from '../../src/ssmParameterReader';
 import fetch from 'node-fetch';
 import jwt from 'jsonwebtoken';
 import { mocked } from 'ts-jest/utils';
 
-jest.mock('../../src/utils', () => ({
+jest.mock('../../src/ssmParameterReader', () => ({
   getSSMParameter: jest.fn(() => 'us-east-1_abc')
 }));
 
