@@ -6,7 +6,7 @@ import jwkToPem from 'jwk-to-pem';
 import jwt from 'jsonwebtoken';
 import { AuthHeader, JWKS, DecodedJWT } from './types';
 import { Callback } from 'aws-lambda/handler';
-import { getSSMParameter } from '../utils';
+import { getSSMParameter } from '../ssmParameterReader';
 
 export async function handler(
   event: CloudFrontRequestEvent,

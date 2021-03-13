@@ -35,7 +35,4 @@ function getSSMParameterClosure(): { get: (path: string) => Promise<string>; res
   };
 }
 
-const closure = getSSMParameterClosure();
-
-export const getSSMParameter = closure.get;
-export const reset = closure.reset;
+export const { get: getSSMParameter, reset } = getSSMParameterClosure();

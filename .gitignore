@@ -4,3 +4,4 @@ dist/
 .aws-sam/
 tsconfig-only-handler.json
 .python-version
+.vscode

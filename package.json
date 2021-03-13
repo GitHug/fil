@@ -9,15 +9,20 @@
   "scripts": {
     "build": "node_modules/typescript/bin/tsc",
     "lint": "eslint --ext .ts .",
-    "test": "jest"
+    "test": "jest",
+    "deploy": "sam build && sam deploy"
   },
   "dependencies": {
+    "@types/uuid": "^8.3.0",
+    "busboy": "^0.3.1",
     "jsonwebtoken": "^8.5.1",
     "jwk-to-pem": "^2.0.4",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.1",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.72",
+    "@types/busboy": "^0.2.3",
     "@types/jest": "^26.0.20",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/jwk-to-pem": "^2.0.0",
