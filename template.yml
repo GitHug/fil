@@ -23,6 +23,8 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: !Ref Stage
+      BinaryMediaTypes:
+        - application/form-data
       Auth:
         ApiKeyRequired: true
         DefaultAuthorizer: GeneralAuth
@@ -57,22 +59,51 @@ Resources:
       KeyType: API_KEY
       UsagePlanId: !Ref ApiUsagePlan
 
-  ApiFunction: # Adds a GET api endpoint at "/" to the ApiGateway via an Api event
+  UploadFunction:
     Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
     Properties:
+      Handler: dist/handlers/upload.handler
+      Layers:
+        - !Ref RuntimeDependenciesLayer
+      Environment:
+        Variables:
+          BUCKET: !Ref FilStorageBucket
+      Policies:
+        - S3WritePolicy:
+            BucketName: !Ref FilStorageBucket
       Events:
         ApiEvent:
           Type: Api
           Properties:
-            Path: /api
-            Method: get
+            Path: /api/uploads
+            Auth:
+              Authorizer: GeneralAuth
+            Method: post
             RestApiId:
               Ref: ApiGateway
-      Runtime: python3.7
-      Handler: index.handler
-      InlineCode: |
-        def handler(event, context):
-            return {'body': 'Hello World!', 'statusCode': 200}
+
+  FilStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::AccountId}-fil-storage-bucket
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+          Status: Enabled
+      CorsConfiguration:
+        CorsRules:
+        - AllowedHeaders:
+            - "*"
+          AllowedMethods:
+            - GET
+            - PUT
+            - HEAD
+          AllowedOrigins:
+            - "*"
 
   UserPool:
     Type: AWS::Cognito::UserPool 
@@ -186,6 +217,14 @@ Resources:
             LambdaFunctionAssociations:
               - EventType: viewer-request
                 LambdaFunctionARN: !Ref AuthAtEdge.Version
+            AllowedMethods:
+              - DELETE
+              - GET
+              - HEAD
+              - OPTIONS
+              - PATCH
+              - POST
+              - PUT
 
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
@@ -248,16 +287,16 @@ Resources:
                 Action: ssm:GetParameter
                 Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/applications/fil/user-pool
 
-  # RuntimeDependenciesLayer:
-  #   Type: AWS::Serverless::LayerVersion
-  #   Properties:
-  #     Description: Runtime dependencies for Lambda functions
-  #     ContentUri: ./
-  #     CompatibleRuntimes:
-  #       - nodejs12.x
-  #     RetentionPolicy: Retain
-  #   Metadata:
-  #     BuildMethod: makefile
+  RuntimeDependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: Runtime dependencies for Lambda functions
+      ContentUri: ./
+      CompatibleRuntimes:
+        - nodejs12.x
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: makefile
 
 Outputs:
   StackName:

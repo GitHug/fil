@@ -1,4 +1,4 @@
-import { getSSMParameter, reset } from '../src/utils';
+import { getSSMParameter, reset } from '../src/ssmParameterReader';
 import SSMClient from 'aws-sdk/clients/ssm';
 
 describe('utils', () => {
