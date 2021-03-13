@@ -73,7 +73,8 @@ describe('upload handler', () => {
       Metadata: {
         name: 'Hello World'
       },
-      ContentDisposition: 'attachment; filename="test.txt"'
+      ContentDisposition: 'attachment; filename="test.txt"',
+      ACL: 'public-read'
     });
 
     expect(output).toEqual({
