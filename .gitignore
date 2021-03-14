@@ -5,3 +5,5 @@ dist/
 tsconfig-only-handler.json
 .python-version
 .vscode
+env.json
+out.log
