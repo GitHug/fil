@@ -10,11 +10,13 @@
     "build": "node_modules/typescript/bin/tsc",
     "lint": "eslint --ext .ts .",
     "test": "jest",
-    "deploy": "sam build && sam deploy"
+    "deploy": "sam build && sam deploy --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
   },
   "dependencies": {
     "@types/uuid": "^8.3.0",
+    "axios": "^0.21.1",
     "busboy": "^0.3.1",
+    "data-api-client": "^1.2.0",
     "jsonwebtoken": "^8.5.1",
     "jwk-to-pem": "^2.0.4",
     "node-fetch": "^2.6.1",
@@ -22,7 +24,9 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.72",
+    "@types/axios": "^0.14.0",
     "@types/busboy": "^0.2.3",
+    "@types/data-api-client": "^1.2.1",
     "@types/jest": "^26.0.20",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/jwk-to-pem": "^2.0.0",

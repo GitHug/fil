@@ -2,12 +2,16 @@
 .PHONY: build-RuntimeDependenciesLayer build-lambda-common
 .PHONY: build-AuthAtEdge
 .PHONY: build-UploadFunction
+.PHONY: build-DBMigrationHandler
 
 build-AuthAtEdge:
 	$(MAKE) HANDLER=src/edge/auth.ts build-lambda-edge
 
 build-UploadFunction:
 	$(MAKE) HANDLER=src/handlers/upload.ts build-lambda-common
+
+build-DBMigrationHandler:
+	$(MAKE) HANDLER=src/handlers/dbMigration.ts build-custom-resource
 
 build-lambda-edge:
 	rm -rf dist
@@ -22,6 +26,14 @@ build-lambda-common:
 	rm -rf dist
 	echo "{\"extends\": \"./tsconfig.json\", \"include\": [\"${HANDLER}\"] }" > tsconfig-only-handler.json
 	yarn build --build tsconfig-only-handler.json
+	cp -r dist "$(ARTIFACTS_DIR)/"
+
+build-custom-resource:
+	rm -rf dist
+	echo "{\"extends\": \"./tsconfig.json\", \"include\": [\"${HANDLER}\"] }" > tsconfig-only-handler.json
+	yarn build --build tsconfig-only-handler.json
+	cp package.json yarn.lock "$(ARTIFACTS_DIR)/"
+	yarn --production --cwd "$(ARTIFACTS_DIR)/"
 	cp -r dist "$(ARTIFACTS_DIR)/"
 
 build-RuntimeDependenciesLayer:

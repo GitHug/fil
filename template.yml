@@ -18,6 +18,16 @@ Parameters:
     MinLength: 20
     Description: API key used for communication between API Gateway and Cloudfront Distribution
 
+  DBMasterUserName:
+    AllowedPattern: "[a-zA-Z0-9_]+"
+    ConstraintDescription: must be between 1 to 16 alphanumeric characters.
+    Description: The database admin account user name, between 1 to 16 alphanumeric characters.
+    MaxLength: '16'
+    MinLength: '1'
+    Type: String
+    Default: admin_user
+
+
 Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
@@ -83,6 +93,47 @@ Resources:
             Method: post
             RestApiId:
               Ref: ApiGateway
+
+  # UserConfirmFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Handler: userConfirm.lambdaHandler
+  #     Timeout: 120
+  #     Environment:
+  #       Variables:
+  #         SECRET_ARN: '{{resolve:ssm:/applications/fil/secret:1}}'
+  #         RDS_CLUSTER: '{{resolve:ssm:/applications/fil/cluster:1}}'
+  #         DATABASE_NAME: '{{resolve:ssm:/applications/fil/database:1}}'
+  #     Description: ''
+  #     Events:
+  #       CognitoEvent:
+  #         Type: Cognito
+  #         Properties:
+  #           UserPool: !Ref UserPool
+  #           Trigger: PostConfirmation
+  #     VpcConfig:
+  #       SecurityGroupIds:
+  #         - '{{resolve:ssm:/applications/fil/security-group:1}}'
+  #       SubnetIds:
+  #         - '{{resolve:ssm:/applications/fil/subnet1:1}}'
+  #         - '{{resolve:ssm:/applications/fil/subnet2:1}}'
+  #         - '{{resolve:ssm:/applications/fil/subnet3:1}}'
+  #     Policies: 
+  #       - arn:aws:iam::aws:policy/AmazonRDSDataFullAccess
+  #       - AWSLambdaBasicExecutionRole
+  #       - AWSLambdaVPCAccessExecutionRole
+  #       - AdministratorAccess
+
+  Database:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: 'database.template.yml'
+      Parameters:
+        DBMasterUserName: !Ref DBMasterUserName
+        VpcCIDR: 10.30.0.0/16
+        NumberOfSubnets: 3
+        SubnetOffset: 8
+        DatabaseName: fil_db
 
   FilStorageBucket:
     Type: AWS::S3::Bucket
