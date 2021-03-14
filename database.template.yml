@@ -1,0 +1,243 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Fil Database
+
+Parameters:
+  VpcCIDR:
+    Description: VPC CIDR
+    Type: String
+    Default: 10.30.0.0/16
+  NumberOfSubnets:
+    Description: Number of Subnets to be created
+    Type: Number
+    MinValue: 3
+    MaxValue: 256
+    Default: 3
+  SubnetOffset:
+    Description: Offset of Subnet from CIDR
+    Type: Number
+    MinValue: 2
+    MaxValue: 64
+    Default: 8
+  DBMasterUserName:
+    AllowedPattern: "[a-zA-Z0-9_]+"
+    ConstraintDescription: must be between 1 to 16 alphanumeric characters.
+    Description: The database admin account user name, between 1 to 16 alphanumeric characters.
+    MaxLength: '16'
+    MinLength: '1'
+    Type: String
+    Default: admin_user
+  DatabaseName:
+    Type: String
+    Default: fil_db
+
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: CloudFormation managed DB subnet group.
+      SubnetIds:
+        - !Ref DBSubnet1
+        - !Ref DBSubnet2
+        - !Ref DBSubnet3
+
+  DBSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Select [0, !Cidr [!Ref VpcCIDR, !Ref NumberOfSubnets, !Ref SubnetOffset]]
+      AvailabilityZone: !Select [0, Fn::GetAZs: ""]
+
+  DBSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Select [1, !Cidr [!Ref VpcCIDR, !Ref NumberOfSubnets, !Ref SubnetOffset]]
+      AvailabilityZone: !Select [1, Fn::GetAZs: ""]
+
+  DBSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: !Select [2, !Cidr [!Ref VpcCIDR, !Ref NumberOfSubnets, !Ref SubnetOffset]]
+      AvailabilityZone: !Select [2, Fn::GetAZs: ""]
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: application
+          Value: fil
+
+  VPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.rds-data
+      VpcId: !Ref VPC
+      PrivateDnsEnabled: true
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref DBSubnet1
+        - !Ref DBSubnet2
+        - !Ref DBSubnet3
+      SecurityGroupIds:
+        - !GetAtt VPC.DefaultSecurityGroup
+
+  DBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: "Fil-AuroraUserSecret"
+      Description: RDS database auto-generated user password
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${DBMasterUserName}"}'
+        GenerateStringKey: "password"
+        PasswordLength: 30
+        ExcludeCharacters: '"@/\'
+
+  RDSCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      DBClusterIdentifier: RDSCluster
+      MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecret, ':SecretString:username}}' ]]
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecret, ':SecretString:password}}' ]]
+      DatabaseName: !Ref DatabaseName
+      Engine: aurora
+      EngineMode: serverless
+      EngineVersion: 5.6.10a
+      EnableHttpEndpoint: true
+      ScalingConfiguration:
+        AutoPause: true
+        MaxCapacity: 4
+        MinCapacity: 1
+        SecondsUntilAutoPause: 900 # 15 min
+      DBSubnetGroupName:
+        Ref: DBSubnetGroup
+
+  DBMigrationHandler:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      Handler: dist/handlers/dbMigration.handler
+      Timeout: 900
+      Runtime: nodejs12.x
+      Policies: 
+        - arn:aws:iam::aws:policy/AmazonRDSDataFullAccess
+        - AWSLambdaBasicExecutionRole
+        - AWSLambdaVPCAccessExecutionRole
+        - AdministratorAccess
+      Environment:
+        Variables:
+          SECRET_ARN: !Ref DBSecret
+          RDS_CLUSTER: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:rdscluster
+          DATABASE_NAME: !Ref DatabaseName
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref DBSubnet1
+          - !Ref DBSubnet2
+          - !Ref DBSubnet3
+
+  DBMigration:
+    Type: Custom::DBMigration
+    Properties:
+      Description: Custom resource to run database migrations
+      ServiceToken: !GetAtt DBMigrationHandler.Arn
+
+  SSMDatabaseName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: "/applications/fil/database"
+      Type: "String"
+      Value: !Ref DatabaseName
+      Description: "Database name"
+
+  SSMDatabaseClusterArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: "/applications/fil/cluster"
+      Type: "String"
+      Value: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:rdscluster
+      Description: "RDS Cluster ARN"
+
+  SSMDatabaseSecretArn:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: "/applications/fil/secret"
+      Type: "String"
+      Value: !Ref DBSecret
+      Description: "DB credentials ARN"
+
+  SSMDatabaseSubnet1:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: "/applications/fil/subnet1"
+      Type: "String"
+      Value: !Ref DBSubnet1
+      Description: Database subnet 1
+
+  SSMDatabaseSubnet2:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: "/applications/fil/subnet2"
+      Type: "String"
+      Value: !Ref DBSubnet2
+      Description: Database subnet 2
+
+  SSMDatabaseSubnet3:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: "/applications/fil/subnet3"
+      Type: "String"
+      Value: !Ref DBSubnet3
+      Description: Database subnet 2
+
+  SSMVPCSecurityGroup:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Name: "/applications/fil/security-group"
+      Type: "String"
+      Value: !GetAtt VPC.DefaultSecurityGroup
+
+Outputs:
+  DatabaseClusterArn:
+    Description: Aurora Cluster ARN
+    Value: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:rdscluster
+    Export:
+      Name: !Sub ${AWS::StackName}-DatabaseClusterArn
+
+  DatabaseSecretArn:
+    Description: Aurora Secret ARN
+    Value: !Ref DBSecret
+    Export:
+      Name: !Sub ${AWS::StackName}-DatabaseSecretArn
+
+  DatabaseClusterID:
+    Description: Aurora Cluster ID
+    Value: !Ref RDSCluster
+    Export:
+      Name: !Sub ${AWS::StackName}-DatabaseClusterID
+
+  AuroraDbURL:
+    Description: Aurora Database URL
+    Value: !GetAtt RDSCluster.Endpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-DatabaseURL
+
+  DatabaseMasterUserName:
+    Description: Aurora Database User
+    Value: !Ref DBMasterUserName
+    Export:
+      Name: !Sub ${AWS::StackName}-DatabaseMasterUserName
+
+  DatabaseName:
+    Description: Aurora Database Name
+    Value: !Ref DatabaseName
