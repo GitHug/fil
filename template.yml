@@ -94,35 +94,83 @@ Resources:
             RestApiId:
               Ref: ApiGateway
 
-  # UserConfirmFunction:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     Handler: userConfirm.lambdaHandler
-  #     Timeout: 120
-  #     Environment:
-  #       Variables:
-  #         SECRET_ARN: '{{resolve:ssm:/applications/fil/secret:1}}'
-  #         RDS_CLUSTER: '{{resolve:ssm:/applications/fil/cluster:1}}'
-  #         DATABASE_NAME: '{{resolve:ssm:/applications/fil/database:1}}'
-  #     Description: ''
-  #     Events:
-  #       CognitoEvent:
-  #         Type: Cognito
-  #         Properties:
-  #           UserPool: !Ref UserPool
-  #           Trigger: PostConfirmation
-  #     VpcConfig:
-  #       SecurityGroupIds:
-  #         - '{{resolve:ssm:/applications/fil/security-group:1}}'
-  #       SubnetIds:
-  #         - '{{resolve:ssm:/applications/fil/subnet1:1}}'
-  #         - '{{resolve:ssm:/applications/fil/subnet2:1}}'
-  #         - '{{resolve:ssm:/applications/fil/subnet3:1}}'
-  #     Policies: 
-  #       - arn:aws:iam::aws:policy/AmazonRDSDataFullAccess
-  #       - AWSLambdaBasicExecutionRole
-  #       - AWSLambdaVPCAccessExecutionRole
-  #       - AdministratorAccess
+  UserConfirmFunction:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - Database
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      Handler: dist/handlers/userConfirm.handler
+      Timeout: 300
+      Environment:
+        Variables:
+          SECRET_ARN: '{{resolve:ssm:/applications/fil/secret:1}}'
+          RDS_CLUSTER: '{{resolve:ssm:/applications/fil/cluster:1}}'
+          DATABASE_NAME: '{{resolve:ssm:/applications/fil/database:1}}'
+      Description: ''
+      Layers:
+        - !Ref RuntimeDependenciesLayer
+      Events:
+        CognitoEvent:
+          Type: Cognito
+          Properties:
+            UserPool: !Ref UserPool
+            Trigger: PostConfirmation
+      VpcConfig:
+        SecurityGroupIds:
+          - '{{resolve:ssm:/applications/fil/security-group:1}}'
+        SubnetIds:
+          - '{{resolve:ssm:/applications/fil/subnet1:1}}'
+          - '{{resolve:ssm:/applications/fil/subnet2:1}}'
+          - '{{resolve:ssm:/applications/fil/subnet3:1}}'
+      Policies: 
+        - arn:aws:iam::aws:policy/AmazonRDSDataFullAccess
+        - AWSLambdaBasicExecutionRole
+        - AWSLambdaVPCAccessExecutionRole
+        - AdministratorAccess
+
+  UploadTriggerFunction:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - Database
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      Handler: dist/handlers/uploadTrigger.handler
+      Timeout: 300
+      Environment:
+        Variables:
+          SECRET_ARN: '{{resolve:ssm:/applications/fil/secret:1}}'
+          RDS_CLUSTER: '{{resolve:ssm:/applications/fil/cluster:1}}'
+          DATABASE_NAME: '{{resolve:ssm:/applications/fil/database:1}}'
+      Description: ''
+      Layers:
+        - !Ref RuntimeDependenciesLayer
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref FilStorageBucket
+            Events: s3:ObjectCreated:Put
+      VpcConfig:
+        SecurityGroupIds:
+          - '{{resolve:ssm:/applications/fil/security-group:1}}'
+        SubnetIds:
+          - '{{resolve:ssm:/applications/fil/subnet1:1}}'
+          - '{{resolve:ssm:/applications/fil/subnet2:1}}'
+          - '{{resolve:ssm:/applications/fil/subnet3:1}}'
+      Policies: 
+        - arn:aws:iam::aws:policy/AmazonRDSDataFullAccess
+        - AWSLambdaBasicExecutionRole
+        - AWSLambdaVPCAccessExecutionRole
+        - AdministratorAccess
+        - Statement:
+          - Effect: Allow
+            Action: 
+              - 's3:GetObject'
+            Resource: 
+              - '*'
 
   Database:
     Type: AWS::Serverless::Application

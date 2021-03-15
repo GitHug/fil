@@ -35,7 +35,8 @@ export async function handler(event: APIGatewayEvent): Promise<LambdaResponse> {
     Body: formData.file,
     ContentType: formData.contentType,
     Metadata: {
-      name: formData.name
+      name: formData.name || formData.fileName,
+      user: event.requestContext.authorizer.claims?.sub
     },
     ContentDisposition: `attachment; filename="${formData.fileName}"`,
     ACL: 'public-read'
