@@ -1,0 +1,38 @@
+{
+  "Records": [
+      {
+          "eventVersion": "2.1",
+          "eventSource": "aws:s3",
+          "awsRegion": "us-east-1",
+          "eventTime": "2021-02-08T06:20:31.639Z",
+          "eventName": "ObjectCreated:Put",
+          "userIdentity": {
+              "principalId": "AWS:XXXXXXXXXXXX"
+          },
+          "requestParameters": {
+              "sourceIPAddress": "XXX.XX.XX.XX"
+          },
+          "responseElements": {
+              "x-amz-request-id": "XXXXXXXXXXXXXX",
+              "x-amz-id-2": "8JOwb8akPkK9UuhsXX8cPhnspGXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/XXXXXXXXXX"
+          },
+          "s3": {
+              "s3SchemaVersion": "1.0",
+              "configurationId": "XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXXX",
+              "bucket": {
+                  "name": "XXXXXXXX-bucket",
+                  "ownerIdentity": {
+                      "principalId": "XXXXXXXXXXXXXXX"
+                  },
+                  "arn": "arn:aws:s3:::XXXXXXXXXX-bucket"
+              },
+              "object": {
+                  "key": "a704f20d6dfd7682a5db8be7a4d8bb6d58aeb1ed7dc24270fd1f5ead5d9e0af5",
+                  "size": 27699,
+                  "eTag": "9319442718c557cdbb9ba7e69e73360f",
+                  "sequencer": "006020D831DEE5FFFE"
+              }
+          }
+      }
+  ]
+}

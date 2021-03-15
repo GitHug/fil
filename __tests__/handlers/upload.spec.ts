@@ -71,7 +71,8 @@ describe('upload handler', () => {
       Body: expect.any(Buffer),
       ContentType: 'text/plain',
       Metadata: {
-        name: 'Hello World'
+        name: 'Hello World',
+        user: '23659abc-XXXX-XXXX-XXXX-XXXXXXXXX'
       },
       ContentDisposition: 'attachment; filename="test.txt"',
       ACL: 'public-read'

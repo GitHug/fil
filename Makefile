@@ -1,7 +1,7 @@
 
 .PHONY: build-RuntimeDependenciesLayer build-lambda-common
 .PHONY: build-AuthAtEdge
-.PHONY: build-UploadFunction
+.PHONY: build-UploadFunction build-UserConfirmFunction build-UploadTriggerFunction
 .PHONY: build-DBMigrationHandler
 
 build-AuthAtEdge:
@@ -9,6 +9,12 @@ build-AuthAtEdge:
 
 build-UploadFunction:
 	$(MAKE) HANDLER=src/handlers/upload.ts build-lambda-common
+
+build-UserConfirmFunction:
+	$(MAKE) HANDLER=src/handlers/userConfirm.ts build-lambda-common
+
+build-UploadTriggerFunction:
+	$(MAKE) HANDLER=src/handlers/uploadTrigger.ts build-lambda-common
 
 build-DBMigrationHandler:
 	$(MAKE) HANDLER=src/handlers/dbMigration.ts build-custom-resource

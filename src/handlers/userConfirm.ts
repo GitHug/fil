@@ -1,7 +1,6 @@
-'use strict';
-
 import { Callback, Context, PostConfirmationTriggerEvent, PostConfirmationTriggerHandler } from 'aws-lambda';
 import dataApiClient from 'data-api-client';
+import { INSERT_INTO_USERS } from '../queries';
 
 const data = dataApiClient({
   secretArn: process.env.SECRET_ARN,
@@ -24,10 +23,10 @@ export const handler: PostConfirmationTriggerHandler = async (
   const { userAttributes } = event.request;
   const { sub, email } = userAttributes;
 
-  console.log('Query to execute: ', `insert into users (sub, email) values (${sub}, ${email});`);
+  console.log('Query to execute: ', INSERT_INTO_USERS);
 
   try {
-    const result = await data.query('insert into users (sub, email) values (:sub, :email);', { sub, email });
+    const result = await data.query(INSERT_INTO_USERS, { sub, email });
     console.log('Query result: ', result);
     callback(null, event);
   } catch (err) {
