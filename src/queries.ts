@@ -14,5 +14,14 @@ CREATE TABLE IF NOT EXISTS uploads (
   object_key VARCHAR(255) NOT NULL UNIQUE,
   name VARCHAR(255) NOT NULL,
   user_id int(10) unsigned NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT uploads_user_id_foreign FOREIGN KEY (user_id) REFERENCES users (id)
 );`;
+
+export const INSERT_INTO_USERS = `
+INSERT INTO users (sub, email) VALUES (:sub, :email);
+`;
+
+export const INSERT_INTO_UPLOADS = `
+INSERT INTO uploads (object_key, name, user_id) VALUES (:key, :name, (SELECT id FROM users WHERE sub = :user));
+`;

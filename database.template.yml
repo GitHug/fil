@@ -31,7 +31,6 @@ Parameters:
     Type: String
     Default: fil_db
 
-
 Resources:
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -89,6 +88,37 @@ Resources:
         - !Ref DBSubnet3
       SecurityGroupIds:
         - !GetAtt VPC.DefaultSecurityGroup
+
+  RouteTablePrivate:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  RouteTableAssociation1:
+    Type : AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTablePrivate
+      SubnetId: !Ref DBSubnet1
+
+  RouteTableAssociation2:
+    Type : AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTablePrivate
+      SubnetId: !Ref DBSubnet2
+
+  RouteTableAssociation3:
+    Type : AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTablePrivate
+      SubnetId: !Ref DBSubnet3
+
+  VPCEndpointS3:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      RouteTableIds: 
+        - !Ref RouteTablePrivate
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: !Ref VPC
 
   DBSecret:
     Type: AWS::SecretsManager::Secret

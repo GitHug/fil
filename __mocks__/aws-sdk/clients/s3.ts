@@ -1,12 +1,27 @@
-import { ManagedUpload } from 'aws-sdk/clients/s3';
+import { HeadObjectOutput, ManagedUpload } from 'aws-sdk/clients/s3';
 
-export const promiseFn = jest.fn(() => Promise.resolve());
-
-export const uploadFn = jest.fn(
+const uploadPromiseFn = jest.fn(() => Promise.resolve());
+const uploadFn = jest.fn(
   () =>
     ({
-      promise: promiseFn as unknown
+      promise: uploadPromiseFn as unknown
     } as ManagedUpload)
+);
+
+const headObjectPromiseFn = jest.fn(() =>
+  Promise.resolve({
+    Metadata: {
+      name: 'test_file',
+      user: 'XXXXXXXX-YYYY-ZZZZZ-AAAAAAAAAAA'
+    }
+  })
+);
+
+const headObjectFn = jest.fn(
+  () =>
+    ({
+      promise: headObjectPromiseFn as unknown
+    } as HeadObjectOutput)
 );
 
 export default class S3 {
@@ -17,4 +32,5 @@ export default class S3 {
   }
 
   upload = uploadFn;
+  headObject = headObjectFn;
 }
