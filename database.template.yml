@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Fil Database
+Description: Database stack for Fil - Microbial File Storage.
 
 Parameters:
   VpcCIDR:
@@ -40,6 +40,9 @@ Resources:
         - !Ref DBSubnet1
         - !Ref DBSubnet2
         - !Ref DBSubnet3
+      Tags:
+        - Key: application
+          Value: fil
 
   DBSubnet1:
     Type: AWS::EC2::Subnet
@@ -48,6 +51,9 @@ Resources:
         Ref: VPC
       CidrBlock: !Select [0, !Cidr [!Ref VpcCIDR, !Ref NumberOfSubnets, !Ref SubnetOffset]]
       AvailabilityZone: !Select [0, Fn::GetAZs: ""]
+      Tags:
+        - Key: application
+          Value: fil
 
   DBSubnet2:
     Type: AWS::EC2::Subnet
@@ -56,6 +62,9 @@ Resources:
         Ref: VPC
       CidrBlock: !Select [1, !Cidr [!Ref VpcCIDR, !Ref NumberOfSubnets, !Ref SubnetOffset]]
       AvailabilityZone: !Select [1, Fn::GetAZs: ""]
+      Tags:
+        - Key: application
+          Value: fil
 
   DBSubnet3:
     Type: AWS::EC2::Subnet
@@ -64,6 +73,9 @@ Resources:
         Ref: VPC
       CidrBlock: !Select [2, !Cidr [!Ref VpcCIDR, !Ref NumberOfSubnets, !Ref SubnetOffset]]
       AvailabilityZone: !Select [2, Fn::GetAZs: ""]
+      Tags:
+        - Key: application
+          Value: fil
 
   VPC:
     Type: AWS::EC2::VPC
@@ -93,6 +105,9 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      Tags:
+        - Key: application
+          Value: fil
 
   RouteTableAssociation1:
     Type : AWS::EC2::SubnetRouteTableAssociation
@@ -130,6 +145,9 @@ Resources:
         GenerateStringKey: "password"
         PasswordLength: 30
         ExcludeCharacters: '"@/\'
+      Tags:
+      - Key: application
+        Value: fil
 
   RDSCluster:
     Type: AWS::RDS::DBCluster
@@ -149,14 +167,18 @@ Resources:
         SecondsUntilAutoPause: 900 # 15 min
       DBSubnetGroupName:
         Ref: DBSubnetGroup
+      Tags:
+        - Key: application
+          Value: fil
 
   DBMigrationHandler:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: makefile
     Properties:
+      Description: Function to create database tables on stack creation
       Handler: dist/handlers/dbMigration.handler
-      Timeout: 900
+      Timeout: 60
       Runtime: nodejs12.x
       Policies: 
         - arn:aws:iam::aws:policy/AmazonRDSDataFullAccess
@@ -181,6 +203,9 @@ Resources:
     Properties:
       Description: Custom resource to run database migrations
       ServiceToken: !GetAtt DBMigrationHandler.Arn
+      Tags:
+        - Key: application
+          Value: fil
 
   SSMDatabaseName:
     Type: AWS::SSM::Parameter
@@ -189,6 +214,7 @@ Resources:
       Type: "String"
       Value: !Ref DatabaseName
       Description: "Database name"
+      Tags: {"Key":"application", "Value":"fil"}
 
   SSMDatabaseClusterArn:
     Type: AWS::SSM::Parameter
@@ -197,6 +223,7 @@ Resources:
       Type: "String"
       Value: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:rdscluster
       Description: "RDS Cluster ARN"
+      Tags: {"Key":"application", "Value":"fil"}
 
   SSMDatabaseSecretArn:
     Type: AWS::SSM::Parameter
@@ -205,6 +232,7 @@ Resources:
       Type: "String"
       Value: !Ref DBSecret
       Description: "DB credentials ARN"
+      Tags: {"Key":"application", "Value":"fil"}
 
   SSMDatabaseSubnet1:
     Type: AWS::SSM::Parameter
@@ -213,6 +241,7 @@ Resources:
       Type: "String"
       Value: !Ref DBSubnet1
       Description: Database subnet 1
+      Tags: {"Key":"application", "Value":"fil"}
 
   SSMDatabaseSubnet2:
     Type: AWS::SSM::Parameter
@@ -221,6 +250,7 @@ Resources:
       Type: "String"
       Value: !Ref DBSubnet2
       Description: Database subnet 2
+      Tags: {"Key":"application", "Value":"fil"}
 
   SSMDatabaseSubnet3:
     Type: AWS::SSM::Parameter
@@ -229,6 +259,7 @@ Resources:
       Type: "String"
       Value: !Ref DBSubnet3
       Description: Database subnet 2
+      Tags: {"Key":"application", "Value":"fil"}
 
   SSMVPCSecurityGroup:
     Type: AWS::SSM::Parameter
@@ -236,6 +267,7 @@ Resources:
       Name: "/applications/fil/security-group"
       Type: "String"
       Value: !GetAtt VPC.DefaultSecurityGroup
+      Tags: {"Key":"application", "Value":"fil"}
 
 Outputs:
   DatabaseClusterArn:

@@ -1,0 +1,20 @@
+{
+  "Records": [
+      {
+          "messageId": "b88d6e7f-68dd-4bc6-957c-dca1d7e516e2",
+          "receiptHandle": "XXXXXX/jhj3oX9dQj10tNsh7f1e5x450yIWZCbcgvJLFBOcZahJoHICJAp2pZ4DpNFHxfOj+sYSUk5pgBTyIb8Vrwoa0a24Bpe0t4JR1QB9JfzE0r8zWej5mpR67rH1zX/GdoM1eyvjRgaFr/KBcKMKHA6i3aRWkR2MqH96uENqM6eUXZ0o3tGu9K5Ana/HXORk7yIAbZesGCFak1P2b0C6fjgVXR9p70adDLdh9gXdZfPfrKSm/EdL467s+mmDKNzZCQTBM2CrLxJXUa625a75rD2kc+GakjAmsYbPnm2LtMo3jdt9a5pNQBxG29C3LUVmRCz6wogk0517UmvL2aNNIOqtj8Ff1f1BO1uzQPC9LBIbGgwMdphaBr9N5g/xl",
+          "body": "{\"sub\":\"XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXX\",\"email\":\"XXXXXXk@XXXXX.XX\"}",
+          "attributes": {
+              "ApproximateReceiveCount": "3",
+              "SentTimestamp": "1615928638032",
+              "SenderId": "XXXXXXXXXXXXXX:fil-UserConfirmFunction-XXXXXXXXX",
+              "ApproximateFirstReceiveTimestamp": "1615928638036"
+          },
+          "messageAttributes": {},
+          "md5OfBody": "XXXXXXXXXXXXXXXXXXXXXXX",
+          "eventSource": "aws:sqs",
+          "eventSourceARN": "arn:aws:sqs:us-east-1:XXXXXXXXXXXX:FilQueue",
+          "awsRegion": "us-east-1"
+      }
+  ]
+}
