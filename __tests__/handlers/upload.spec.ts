@@ -17,6 +17,10 @@ jest.mock('uuid', () => ({
   v4: () => 'b177a68d-1d1e-4c54-9aff-42dea88cc48c'
 }));
 
+jest.mock('../../src/ssmParameterReader', () => ({
+  getSSMParameter: jest.fn(() => 'www.my-cf-domain.com')
+}));
+
 describe('upload handler', () => {
   const s3 = new S3({ region: 'us-east-1' });
 
@@ -81,7 +85,7 @@ describe('upload handler', () => {
     expect(output).toEqual({
       statusCode: 201,
       body: JSON.stringify({
-        key: 'b177a68d-1d1e-4c54-9aff-42dea88cc48c'
+        url: 'www.my-cf-domain.com/b177a68d-1d1e-4c54-9aff-42dea88cc48c'
       }),
       headers: {
         'Content-Type': 'application/json'

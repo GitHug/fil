@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: AWS SAM template for provisioning Fil.
+Description: AWS SAM template for provisioning Fil - Microbial File Storage.
 
 Globals:
   Function:
@@ -27,11 +27,11 @@ Parameters:
     Type: String
     Default: admin_user
 
-
 Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
+      Description: API Gateway for Fil - Microbial File Storage
       StageName: !Ref Stage
       BinaryMediaTypes:
         - application/form-data
@@ -49,11 +49,14 @@ Resources:
     DependsOn:
       - ApiGatewayStage
     Properties:
-      Description: CloudFront usage only
+      Description: CloudFront usage only (Fil)
       UsagePlanName: !Sub ${AWS::StackName}_CloudFront_only
       ApiStages:
         - ApiId: !Ref ApiGateway
           Stage: !Ref Stage
+      Tags:
+        - Key: application
+          Value: fil
 
   ApiKey: 
     Type: AWS::ApiGateway::ApiKey
@@ -74,6 +77,7 @@ Resources:
     Metadata:
       BuildMethod: makefile
     Properties:
+      Description: Handles form data file uploads to S3
       Handler: dist/handlers/upload.handler
       Layers:
         - !Ref RuntimeDependenciesLayer
@@ -83,6 +87,10 @@ Resources:
       Policies:
         - S3WritePolicy:
             BucketName: !Ref FilStorageBucket
+        - Statement:
+          - Effect: Allow
+            Action: ssm:GetParameter
+            Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/applications/fil/cloudfront-domain
       Events:
         ApiEvent:
           Type: Api
@@ -101,14 +109,12 @@ Resources:
     Metadata:
       BuildMethod: makefile
     Properties:
+      Description: Handler for putting user details on SQS post confirmation sign-up
       Handler: dist/handlers/userConfirm.handler
-      Timeout: 300
+      Timeout: 10
       Environment:
         Variables:
-          SECRET_ARN: '{{resolve:ssm:/applications/fil/secret:1}}'
-          RDS_CLUSTER: '{{resolve:ssm:/applications/fil/cluster:1}}'
-          DATABASE_NAME: '{{resolve:ssm:/applications/fil/database:1}}'
-      Description: ''
+          QUEUE: !Ref FilQueue
       Layers:
         - !Ref RuntimeDependenciesLayer
       Events:
@@ -117,6 +123,50 @@ Resources:
           Properties:
             UserPool: !Ref UserPool
             Trigger: PostConfirmation
+      Policies: 
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+          - Effect: Allow
+            Action: 
+              - 'sqs:SendMessage'
+            Resource: 
+              - '*'
+
+  FilQueue: 
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: FilQueue
+      VisibilityTimeout: 60
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt FilDeadLetterQueue.Arn
+        maxReceiveCount: 5
+
+  FilDeadLetterQueue:
+    Type: AWS::SQS::Queue
+
+  CreateUserFunction:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - Database
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      Description: SQS worker for inserting user details in DB
+      Handler: dist/handlers/createUser.handler
+      Timeout: 60
+      Environment:
+        Variables:
+          SECRET_ARN: '{{resolve:ssm:/applications/fil/secret:1}}'
+          RDS_CLUSTER: '{{resolve:ssm:/applications/fil/cluster:1}}'
+          DATABASE_NAME: '{{resolve:ssm:/applications/fil/database:1}}'
+      Layers:
+        - !Ref RuntimeDependenciesLayer
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt FilQueue.Arn
+            BatchSize: 1
       VpcConfig:
         SecurityGroupIds:
           - '{{resolve:ssm:/applications/fil/security-group:1}}'
@@ -137,14 +187,17 @@ Resources:
     Metadata:
       BuildMethod: makefile
     Properties:
+      Description: Insert upload details into DB
       Handler: dist/handlers/uploadTrigger.handler
-      Timeout: 300
+      Timeout: 60
+      DeadLetterQueue: 
+        TargetArn: !GetAtt FilDeadLetterQueue.Arn
+        Type: SQS
       Environment:
         Variables:
           SECRET_ARN: '{{resolve:ssm:/applications/fil/secret:1}}'
           RDS_CLUSTER: '{{resolve:ssm:/applications/fil/cluster:1}}'
           DATABASE_NAME: '{{resolve:ssm:/applications/fil/database:1}}'
-      Description: ''
       Layers:
         - !Ref RuntimeDependenciesLayer
       Events:
@@ -351,6 +404,7 @@ Resources:
     Metadata:
       BuildMethod: makefile
     Properties:
+      Description: CloudFront edge auth handler
       Handler: dist/edge/auth.handler
       Role: !GetAtt AuthAtEdgeRole.Arn
       AutoPublishAlias: live
@@ -397,6 +451,14 @@ Resources:
     Metadata:
       BuildMethod: makefile
 
+  SSMCloudFrontDomainName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /applications/fil/cloudfront-domain
+      Type: String
+      Value: !Sub "https://${Distribution.DomainName}"
+      Description: Cloudfront domain name
+
 Outputs:
   StackName:
     Description: Stack Name
@@ -415,3 +477,21 @@ Outputs:
   ClientID:
     Description: "User pool client ID"
     Value: !Ref UserPoolClient
+
+  UserConfirmQueueURL: 
+    Description: "URL of queue for processing confirmed users post sign-up"
+    Value: !Ref FilQueue
+
+  SourceQueueARN: 
+    Description: "ARN of user confirm queue"
+    Value: !GetAtt FilQueue.Arn
+
+  DeadLetterQueueURL: 
+    Description: "URL of dead-letter queue"
+    Value: 
+      Ref: "FilDeadLetterQueue"
+
+  DeadLetterQueueARN: 
+    Description: "ARN of dead-letter queue"
+    Value: !GetAtt FilDeadLetterQueue.Arn
+
