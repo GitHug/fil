@@ -3,6 +3,7 @@ import S3 from 'aws-sdk/clients/s3';
 import formDataParser from '../formDataParser';
 import { v4 as uuid } from 'uuid';
 import { LambdaResponse, ParsedFormData } from './types';
+import { getSSMParameter } from '../ssmParameterReader';
 
 const s3 = new S3({
   region: 'us-east-1',
@@ -29,6 +30,13 @@ export async function handler(event: APIGatewayEvent): Promise<LambdaResponse> {
 
   console.log('BUCKET: ', process.env.BUCKET);
 
+  const cloudfrontDomain = await getCloudFrontDomain();
+  if (!cloudfrontDomain) {
+    return createResponse(500, {
+      message: 'Unexpected error'
+    });
+  }
+
   const s3Params: S3.PutObjectRequest = {
     Bucket: process.env.BUCKET,
     Key: key,
@@ -54,7 +62,7 @@ export async function handler(event: APIGatewayEvent): Promise<LambdaResponse> {
     });
   }
 
-  return createResponse(201, { key });
+  return createResponse(201, { url: `${cloudfrontDomain}/${key}` });
 }
 
 const createResponse = (statusCode: number, body: { [key: string]: string }): LambdaResponse => ({
@@ -64,3 +72,12 @@ const createResponse = (statusCode: number, body: { [key: string]: string }): La
   },
   body: JSON.stringify(body)
 });
+
+async function getCloudFrontDomain(): Promise<string | undefined> {
+  try {
+    const userPoolId = await getSSMParameter('/applications/fil/cloudfront-domain');
+    return userPoolId;
+  } catch (err) {
+    console.log('Failed to fetch user pool id:', err, err.stack);
+  }
+}
