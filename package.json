@@ -1,11 +1,12 @@
 {
   "name": "fil",
   "version": "1.0.0",
-  "description": "Fil - File Storage",
+  "description": "Fil - Microbial File Storage",
   "main": "src/index.js",
   "author": "fredrik@takanoha.ax",
   "license": "MIT",
   "private": true,
+  "repository": "github:GitHug/fil",
   "scripts": {
     "build": "node_modules/typescript/bin/tsc",
     "lint": "eslint --ext .ts .",
