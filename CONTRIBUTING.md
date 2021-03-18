@@ -13,17 +13,10 @@ Pull requests are the best way to propose changes to the codebase. Pull requests
 
 1. Fork the repo and create your branch from `main`.
 2. If you've added code that should be tested, add tests.
-3. If you've changed APIs or added new features, update the documentation. This repository is designed for learning so be as detailed as possible and update/add the relevant sections in `README` and `ARCHITECTURE`.
+3. If you've changed APIs or added new features, update the documentation. This repository is designed for learning so be as detailed as possible and update/add the relevant sections in [README](README.md) and [ARCHITECTURE](ARCHITECTURE.md).
 4. Ensure the test suite passes.
 5. Make sure your code lints.
 6. Issue that pull request 🚀
-
-## Report bugs using Github's [issues](https://github.com/briandk/transcriptase-atom/issues)
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](); it's that easy!
-
-## Write bug reports with detail, background, and sample code
-[This is an example](http://stackoverflow.com/q/12488905/180626) of a bug report I wrote, and I think it's not a bad model. Here's [another example from Craig Hockenberry](http://www.openradar.me/11905408), an app developer whom I greatly respect.
-
 ## License
 By contributing, you agree that your contributions will be licensed under its MIT License.
 
