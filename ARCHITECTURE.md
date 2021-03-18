@@ -9,10 +9,6 @@ I did a lot of research trying to build this stack, and what I found was that th
 The application consists of one main stack containing a nested stack. The nested stack, named __Database__, contains the resources required for setting up an RDS instance with [Aurora Serverless](https://aws.amazon.com/rds/aurora/serverless/) MySQL instance. That includes a Virtual Private Cloud containing three private subnets. The private subnets are identical in nature and could probably be reduced, but for this exercise I decided to stick with that amount. The Database stack also contains the AWS Secrets Manager containing the database credentials. It also contains a custom resource for creating the database tables on first stack creation.
 
 The main stack contains the CloudFront distribution and the API Gateway. CloudFront requires authentication for all `/{Stage}/api` routes, where `Stage` is the parameter provided when the stack was deployed. Authentication is done at edge, meaning unauthenticated requests does not even enter the main application and is being done in CloudFront as a `viewer-request`. I wanted to ensure that the only entry-point to the API Gateway was through CloudFront. Thus I make use of an API key between CloudFront and the API Gateway. There are most likely other ways of achieving this, however this is working fairly well for this use case as guessing a 20 character API would take a not insignificant amount of time. If the API wey was to become publicly available, the API Gateway still uses auth, so an unauthenticated user would not be able to access any API resources anyway without an account. 
-
-### Communication between CloudFront and API Gateway
-One aim of the stack was to ensure that 
-
 ## Database
 The database is an Aurora Serverless MySQL instance containing two database tables:
 
