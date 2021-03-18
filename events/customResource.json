@@ -2,7 +2,7 @@
   "RequestType": "Create",
   "ServiceToken": "arn:aws:lambda:us-east-1:XXXXXXXXX:function:fil-Database-XXXXXXXXX-DBMigrationHandler-XXXXXXXXX",
   "ResponseURL": "https://cloudformation-custom-resource-response-useast1.s3.amazonaws.com/arn%3Aaws%3Acloudformation%3Aus-east-1%3XXXXXXXX%3Astack/fil-Database-XXXXXXX/XXXXX-XXXX-XXXX-XXXX-XXXXXXXDBMigration%7XXXXXX-XXXX-XXXX-XXXX-XXXXXXf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20210314T150051Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-CredentialXXXXXXXXXXXXXXXX%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=XXXXXXXXXXXXXXXXXXXXXXXXXXXe",
-  "StackId": "arn:aws:cloudformation:us-east-1:887556201142:stack/fil-Database-LCHE0V6I467S/00c63120-849e-11eb-8dc0-0a254e00bc9f",
+  "StackId": "arn:aws:cloudformation:us-east-1:XXXXXXX:stack/fil-Database-LCHE0V6I467S/XXXXXXXXXXX",
   "RequestId": "7fbf0a92-14e6-4fb8-bf80-698b3ac1af6f",
   "LogicalResourceId": "DBMigration",
   "ResourceType": "Custom::DBMigration",
