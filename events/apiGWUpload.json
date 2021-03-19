@@ -4,7 +4,7 @@
   "httpMethod": "POST",
   "headers": {
       "Accept-Encoding": "gzip, deflate, br",
-      "Authorization": "Bearer eyJraWQiOiJwUVZWTXpkWlRcL21wallveE1acTFkN1FWeTNDNWhtY2xDVU5ZMjJINEJCZz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIyMzY1OWFiYy1lMWUwLTQyOGItYTU0Ny1mMzRkYTNlYjkxMWYiLCJldmVudF9pZCI6ImRjMjc3NTc1LWYwZWUtNGMzYy1hZTIyLWFmYmQwNjY0ZDY3MSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE2MTU2MzM5MjAsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0xXzJreHYxTmlURiIsImV4cCI6MTYxNTYzNzUyMCwiaWF0IjoxNjE1NjMzOTIwLCJ2ZXJzaW9uIjoyLCJqdGkiOiI5OTJiNmNkYS05NDMwLTQ2ZTQtOGQ4Yi1iNjgwNTAwMTA0MTQiLCJjbGllbnRfaWQiOiI1dTdhZnVnbjA3ZzlkaHZoNDJnN2lkazduaCIsInVzZXJuYW1lIjoiMjM2NTlhYmMtZTFlMC00MjhiLWE1NDctZjM0ZGEzZWI5MTFmIn0.djvo6iTcK3Wwqr3cB6qBCJ42El3yVzkdNr7ben7uGYemVDidg2vkWJq-iz6SPDxhmuavLHh2JZei3YFj6fXAmGHFpHGO51A6TmK4X1tUjY2O2Q_7kVpW9kjH5yrVpbRN0fRXfRP6xsD-DrwN40FI2vPPrbj-eCpLHfJkcUvpLggHY0eDsXD2c8r0F7NqlvxX2X_rjrv5LwxavFobHj4bcxNTZOZXNj4ZRb7RpAgaNLPL18AVnmWgQFCQHYQQ6L90LH0HDkq5_rB_zJI9w4x1xLOslqGbTtT3XQbVoj5v_jFdfq-hNiX4oSQ_S8JURx6sGVUiXZWIxxfZC3FMACQxXA",
+      "Authorization": "Bearer XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
       "CloudFront-Forwarded-Proto": "https",
       "CloudFront-Is-Desktop-Viewer": "true",
       "CloudFront-Is-Mobile-Viewer": "false",
