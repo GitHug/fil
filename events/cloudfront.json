@@ -12,7 +12,7 @@
             ],
             "authorization": [
               {
-                "value":"Bearer ***REMOVED***",
+                "value":"Bearer XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
                 "key": "Authorization" 
               }
             ]
