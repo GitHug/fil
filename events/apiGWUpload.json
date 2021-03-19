@@ -4,7 +4,7 @@
   "httpMethod": "POST",
   "headers": {
       "Accept-Encoding": "gzip, deflate, br",
-      "Authorization": "Bearer ***REMOVED***",
+      "Authorization": "Bearer XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
       "CloudFront-Forwarded-Proto": "https",
       "CloudFront-Is-Desktop-Viewer": "true",
       "CloudFront-Is-Mobile-Viewer": "false",
