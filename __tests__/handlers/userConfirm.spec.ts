@@ -3,8 +3,7 @@ import event from '../../events/postConfirmation.json';
 import { mocked } from 'ts-jest/utils';
 import { Context } from 'aws-lambda/handler';
 import { PostConfirmationTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/post-confirmation';
-import { INSERT_INTO_USERS } from '../../src/queries';
-import SQS, { SendMessageRequest, SendMessageResult } from 'aws-sdk/clients/sqs';
+import SQS, { SendMessageResult } from 'aws-sdk/clients/sqs';
 import { AWSError } from 'aws-sdk/lib/error';
 import { Request } from 'aws-sdk';
 

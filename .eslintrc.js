@@ -5,7 +5,9 @@ module.exports = {
     sourceType: 'module'
   },
   extends: ['plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'],
-  rules: {},
+  rules: {
+    '@typescript-eslint/no-unused-vars': ['error']
+  },
   env: {
     browser: true,
     node: true

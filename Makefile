@@ -2,7 +2,7 @@
 .PHONY: build-RuntimeDependenciesLayer build-lambda-common
 .PHONY: build-AuthAtEdge
 .PHONY: build-UploadFunction build-UserConfirmFunction build-UploadTriggerFunction build-CreateUserFunction
-.PHONY: build-DBMigrationHandler
+.PHONY: build CustomResourceHandler build-DBMigrationHandler
 
 build-AuthAtEdge:
 	$(MAKE) HANDLER=src/edge/auth.ts build-lambda-edge
@@ -18,6 +18,9 @@ build-UploadTriggerFunction:
 
 build-CreateUserFunction:
 	$(MAKE) HANDLER=src/handlers/createUser.ts build-lambda-common
+
+build-CustomResourceHandler:
+	$(MAKE) HANDLER=src/handlers/customResource.ts build-custom-resource
 
 build-DBMigrationHandler:
 	$(MAKE) HANDLER=src/handlers/dbMigration.ts build-custom-resource

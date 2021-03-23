@@ -11,7 +11,8 @@
     "build": "node_modules/typescript/bin/tsc",
     "lint": "eslint --ext .ts .",
     "test": "jest",
-    "deploy": "sam build && sam deploy --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+    "deploy:only": "sam deploy --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND",
+    "deploy": "sam build && yarn deploy:only"
   },
   "dependencies": {
     "@types/uuid": "^8.3.0",

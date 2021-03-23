@@ -152,7 +152,7 @@ Resources:
   RDSCluster:
     Type: AWS::RDS::DBCluster
     Properties:
-      DBClusterIdentifier: RDSCluster
+      DBClusterIdentifier: FilRDSCluster
       MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecret, ':SecretString:username}}' ]]
       MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecret, ':SecretString:password}}' ]]
       DatabaseName: !Ref DatabaseName
@@ -171,6 +171,48 @@ Resources:
         - Key: application
           Value: fil
 
+  DBMigration:
+    Type: Custom::DBMigration
+    Properties:
+      Description: Custom resource to run database migrations
+      ServiceToken: !GetAtt CustomResourceHandler.Arn
+      Tags:
+        - Key: application
+          Value: fil
+
+  CustomResourceHandler:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      Description: Handler for putting user details on SQS post confirmation sign-up
+      Handler: dist/handlers/customResource.handler
+      Timeout: 30
+      Runtime: nodejs12.x
+      Environment:
+        Variables:
+          QUEUE: !Ref MigratorQueue
+      Policies: 
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+          - Effect: Allow
+            Action: 
+              - 'sqs:SendMessage'
+            Resource: 
+              - '*'
+
+  MigratorQueue: 
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: MigratorQueue
+      VisibilityTimeout: 60
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt MigratorDeadLetterQueue.Arn
+        maxReceiveCount: 5
+
+  MigratorDeadLetterQueue:
+    Type: AWS::SQS::Queue
+  
   DBMigrationHandler:
     Type: AWS::Serverless::Function
     Metadata:
@@ -188,7 +230,7 @@ Resources:
       Environment:
         Variables:
           SECRET_ARN: !Ref DBSecret
-          RDS_CLUSTER: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:rdscluster
+          RDS_CLUSTER: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:filrdscluster
           DATABASE_NAME: !Ref DatabaseName
       VpcConfig:
         SecurityGroupIds:
@@ -197,15 +239,6 @@ Resources:
           - !Ref DBSubnet1
           - !Ref DBSubnet2
           - !Ref DBSubnet3
-
-  DBMigration:
-    Type: Custom::DBMigration
-    Properties:
-      Description: Custom resource to run database migrations
-      ServiceToken: !GetAtt DBMigrationHandler.Arn
-      Tags:
-        - Key: application
-          Value: fil
 
   SSMDatabaseName:
     Type: AWS::SSM::Parameter
@@ -221,7 +254,7 @@ Resources:
     Properties:
       Name: "/applications/fil/cluster"
       Type: "String"
-      Value: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:rdscluster
+      Value: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:filrdscluster
       Description: "RDS Cluster ARN"
       Tags: {"Key":"application", "Value":"fil"}
 
@@ -272,7 +305,7 @@ Resources:
 Outputs:
   DatabaseClusterArn:
     Description: Aurora Cluster ARN
-    Value: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:rdscluster
+    Value: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:filrdscluster
     Export:
       Name: !Sub ${AWS::StackName}-DatabaseClusterArn
 
